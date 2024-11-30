@@ -58,41 +58,101 @@ h1 {
     background: #bbada0;
     padding: 15px;
     border-radius: 6px;
-    margin-bottom: 20px;
+    margin: 0 auto 20px;
+    max-width: 100%;
+    box-sizing: border-box;
+    touch-action: none; /* Prevents default touch behaviors */
 }
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
     grid-gap: 15px;
     position: relative;
+    margin: 0 auto;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+}
+
+.grid-container.size-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.grid-container.size-8 {
+    grid-template-columns: repeat(8, 1fr);
+}
+
+.grid-container.size-16 {
+    grid-template-columns: repeat(16, 1fr);
 }
 
 .grid-cell {
     background: rgba(238, 228, 218, 0.35);
-    aspect-ratio: 1;
     border-radius: 3px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 35px;
-    font-weight: bold;
-    color: #776e65;
     position: relative;
+    aspect-ratio: 1;
 }
 
 .tile {
     position: absolute;
-    width: calc(25% - 15px * 3/4);
-    height: calc(25% - 15px * 3/4);
-    background: #eee4da;
     border-radius: 3px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 35px;
     font-weight: bold;
-    transition: all 0.15s ease-in-out;
+    transition: transform 0.15s ease-in-out;
+    background: #eee4da;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    will-change: transform;
+}
+
+/* Adjust font sizes based on grid size and viewport */
+.size-4 .tile { font-size: clamp(16px, calc(100vmin / 16), 35px); }
+.size-8 .tile { font-size: clamp(12px, calc(100vmin / 32), 20px); }
+.size-16 .tile { font-size: clamp(8px, calc(100vmin / 64), 14px); }
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+select#grid-size {
+    padding: 10px 20px;
+    border-radius: 3px;
+    border: none;
+    background: #8f7a66;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+select#grid-size:hover {
+    background: #7f6a56;
+}
+
+.controls-info {
+    text-align: center;
+    color: #776e65;
+}
+
+button {
+    background: #8f7a66;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #7f6a56;
 }
 
 .tile-new {
@@ -114,26 +174,6 @@ h1 {
 .tile-512 { background: #edc850; color: white; font-size: 30px; }
 .tile-1024 { background: #edc53f; color: white; font-size: 25px; }
 .tile-2048 { background: #edc22e; color: white; font-size: 25px; }
-
-.controls-info {
-    text-align: center;
-    color: #776e65;
-}
-
-button {
-    background: #8f7a66;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-button:hover {
-    background: #7f6a56;
-}
 
 @keyframes appear {
     0% { transform: scale(0); }

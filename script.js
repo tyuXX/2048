@@ -1,26 +1,58 @@
 class Game2048 {
-    constructor() {
-        this.gridSize = 4;
+    constructor(gridSize = 4) {
+        this.gridSize = gridSize;
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(0));
         this.score = 0;
-        this.bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
+        this.bestScore = parseInt(localStorage.getItem(`bestScore${gridSize}`)) || 0;
         this.gameContainer = document.getElementById('grid-container');
         this.setupGrid();
         this.initializeGame();
     }
 
     setupGrid() {
+        // Clear existing grid
+        this.gameContainer.innerHTML = '';
+        
+        // Update grid size class
+        this.gameContainer.className = `grid-container size-${this.gridSize}`;
+        
+        // Calculate container size based on viewport
+        // Account for container padding (15px on each side = 30px total)
+        const padding = 30;
+        const maxWidth = Math.min(500, window.innerWidth * 0.9) - padding;
+        const maxHeight = Math.min(500, window.innerHeight * 0.7) - padding;
+        
+        // Use the smaller dimension to ensure square cells
+        const size = Math.min(maxWidth, maxHeight);
+        this.containerSize = size;
+        
+        // Calculate cell size accounting for gaps
+        // For n cells, we need (n-1) gaps between cells
+        const gapSize = 15;
+        const totalGapSpace = gapSize * (this.gridSize - 1);
+        this.cellSize = (size - totalGapSpace) / this.gridSize;
+        
+        // Set container size
+        this.gameContainer.style.width = `${size}px`;
+        this.gameContainer.style.height = `${size}px`;
+        
         // Create empty grid cells
         for (let i = 0; i < this.gridSize * this.gridSize; i++) {
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
+            cell.style.width = `${this.cellSize}px`;
+            cell.style.height = `${this.cellSize}px`;
             this.gameContainer.appendChild(cell);
         }
-        // Set grid container size
-        const firstCell = document.querySelector('.grid-cell');
-        const cellSize = firstCell.offsetWidth;
-        this.gameContainer.style.width = (cellSize * this.gridSize + 15 * (this.gridSize - 1)) + 'px';
-        this.gameContainer.style.height = this.gameContainer.style.width;
+        
+        // Add window resize handler
+        if (!this.resizeHandler) {
+            this.resizeHandler = () => {
+                this.setupGrid();
+                this.renderGrid(); // Re-render all tiles after resize
+            };
+            window.addEventListener('resize', this.resizeHandler);
+        }
     }
 
     initializeGame() {
@@ -68,12 +100,15 @@ class Game2048 {
         tile.className = `tile tile-${value}${isNew ? ' tile-new' : ''}`;
         tile.textContent = value;
         
-        // Calculate position
-        const cellSize = document.querySelector('.grid-cell').offsetWidth;
-        const gap = 15; // Same as grid-gap in CSS
+        const gapSize = 15;
+        const position = {
+            left: col * (this.cellSize + gapSize),
+            top: row * (this.cellSize + gapSize)
+        };
         
-        tile.style.left = (col * (cellSize + gap)) + 'px';
-        tile.style.top = (row * (cellSize + gap)) + 'px';
+        tile.style.width = `${this.cellSize}px`;
+        tile.style.height = `${this.cellSize}px`;
+        tile.style.transform = `translate(${position.left}px, ${position.top}px)`;
         
         this.gameContainer.appendChild(tile);
     }
@@ -157,7 +192,7 @@ class Game2048 {
         document.getElementById('score').textContent = this.score;
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
-            localStorage.setItem('bestScore', this.bestScore);
+            localStorage.setItem(`bestScore${this.gridSize}`, this.bestScore);
             document.getElementById('best-score').textContent = this.bestScore;
         }
     }
@@ -188,7 +223,11 @@ class Game2048 {
 // Initialize game
 let game;
 document.addEventListener('DOMContentLoaded', () => {
-    game = new Game2048();
+    game = new Game2048(4); // Default to 4x4 grid
+    
+    // Update best score display for initial grid size
+    document.getElementById('best-score').textContent = 
+        localStorage.getItem('bestScore4') || '0';
 });
 
 // Handle keyboard input
@@ -215,6 +254,15 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
+
+// Handle grid size change
+function changeGridSize(size) {
+    size = parseInt(size);
+    // Update best score display for new grid size
+    document.getElementById('best-score').textContent = 
+        localStorage.getItem(`bestScore${size}`) || '0';
+    game = new Game2048(size);
+}
 
 // Reset game
 function resetGame() {
