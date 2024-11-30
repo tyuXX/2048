@@ -3,10 +3,19 @@ class Game2048 {
         this.gridSize = gridSize;
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(0));
         this.score = 0;
-        this.bestScore = parseInt(localStorage.getItem(`bestScore${gridSize}`)) || 0;
+        this.bestScore = this.loadBestScore();
         this.gameContainer = document.getElementById('grid-container');
         this.setupGrid();
         this.initializeGame();
+    }
+
+    loadBestScore() {
+        const storedScore = localStorage.getItem(`bestScore${this.gridSize}`);
+        return storedScore ? parseInt(storedScore) : 0;
+    }
+
+    saveBestScore() {
+        localStorage.setItem(`bestScore${this.gridSize}`, this.bestScore.toString());
     }
 
     setupGrid() {
@@ -59,7 +68,8 @@ class Game2048 {
     initializeGame() {
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(0));
         this.score = 0;
-        this.updateScore();
+        document.getElementById('score').textContent = '0';
+        document.getElementById('best-score').textContent = this.bestScore;
         this.addNewTile();
         this.addNewTile();
         this.renderGrid();
@@ -151,26 +161,27 @@ class Game2048 {
         if (moved) {
             this.addNewTile();
             this.renderGrid();
-            this.updateScore();
-            
-            // Check for game over
-            if (this.isGameOver()) {
-                setTimeout(() => alert('Game Over!'), 300);
-            }
         }
     }
 
     moveRow(row) {
         // Filter non-zero elements
         let elements = row.filter(x => x !== 0);
+        let scoreGain = 0;
         
         // Merge adjacent equal elements
         for (let i = 0; i < elements.length - 1; i++) {
             if (elements[i] === elements[i + 1]) {
                 elements[i] *= 2;
-                this.score += elements[i];
+                scoreGain += elements[i];
                 elements.splice(i + 1, 1);
             }
+        }
+        
+        // Update score if any merges happened
+        if (scoreGain > 0) {
+            this.score += scoreGain;
+            this.updateScore();
         }
         
         // Pad with zeros
@@ -193,7 +204,7 @@ class Game2048 {
         document.getElementById('score').textContent = this.score;
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
-            localStorage.setItem(`bestScore${this.gridSize}`, this.bestScore);
+            this.saveBestScore();
             document.getElementById('best-score').textContent = this.bestScore;
         }
     }
@@ -229,22 +240,14 @@ function updateSizeDisplay(size) {
 // Handle grid size change
 function changeGridSize(size) {
     size = parseInt(size);
-    // Update best score display for new grid size
-    document.getElementById('best-score').textContent = 
-        localStorage.getItem(`bestScore${size}`) || '0';
     game = new Game2048(size);
+    // Best score is now loaded in the constructor
 }
 
 // Initialize game
 let game;
 document.addEventListener('DOMContentLoaded', () => {
     game = new Game2048(4); // Default to 4x4 grid
-    
-    // Update best score display for initial grid size
-    document.getElementById('best-score').textContent = 
-        localStorage.getItem('bestScore4') || '0';
-    
-    // Set initial size display
     updateSizeDisplay(4);
 });
 
