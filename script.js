@@ -13,11 +13,11 @@ class Game2048 {
         // Clear existing grid
         this.gameContainer.innerHTML = '';
         
-        // Update grid size class
-        this.gameContainer.className = `grid-container size-${this.gridSize}`;
+        // Update grid size class and CSS variable
+        this.gameContainer.className = 'grid-container';
+        document.documentElement.style.setProperty('--grid-size', this.gridSize);
         
         // Calculate container size based on viewport
-        // Account for container padding (15px on each side = 30px total)
         const padding = 30;
         const maxWidth = Math.min(500, window.innerWidth * 0.9) - padding;
         const maxHeight = Math.min(500, window.innerHeight * 0.7) - padding;
@@ -27,14 +27,15 @@ class Game2048 {
         this.containerSize = size;
         
         // Calculate cell size accounting for gaps
-        // For n cells, we need (n-1) gaps between cells
-        const gapSize = 15;
+        const gapSize = Math.min(15, Math.max(2, Math.floor(size / this.gridSize / 4))); // Adaptive gap size
         const totalGapSpace = gapSize * (this.gridSize - 1);
         this.cellSize = (size - totalGapSpace) / this.gridSize;
         
-        // Set container size
+        // Set container size and grid template
         this.gameContainer.style.width = `${size}px`;
         this.gameContainer.style.height = `${size}px`;
+        this.gameContainer.style.gap = `${gapSize}px`;
+        this.gameContainer.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
         
         // Create empty grid cells
         for (let i = 0; i < this.gridSize * this.gridSize; i++) {
@@ -49,7 +50,7 @@ class Game2048 {
         if (!this.resizeHandler) {
             this.resizeHandler = () => {
                 this.setupGrid();
-                this.renderGrid(); // Re-render all tiles after resize
+                this.renderGrid();
             };
             window.addEventListener('resize', this.resizeHandler);
         }
@@ -100,7 +101,7 @@ class Game2048 {
         tile.className = `tile tile-${value}${isNew ? ' tile-new' : ''}`;
         tile.textContent = value;
         
-        const gapSize = 15;
+        const gapSize = Math.min(15, Math.max(2, Math.floor(this.containerSize / this.gridSize / 4))); // Adaptive gap size
         const position = {
             left: col * (this.cellSize + gapSize),
             top: row * (this.cellSize + gapSize)
@@ -220,6 +221,20 @@ class Game2048 {
     }
 }
 
+// Update size display while sliding
+function updateSizeDisplay(size) {
+    document.getElementById('size-display').textContent = `${size}x${size}`;
+}
+
+// Handle grid size change
+function changeGridSize(size) {
+    size = parseInt(size);
+    // Update best score display for new grid size
+    document.getElementById('best-score').textContent = 
+        localStorage.getItem(`bestScore${size}`) || '0';
+    game = new Game2048(size);
+}
+
 // Initialize game
 let game;
 document.addEventListener('DOMContentLoaded', () => {
@@ -228,6 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update best score display for initial grid size
     document.getElementById('best-score').textContent = 
         localStorage.getItem('bestScore4') || '0';
+    
+    // Set initial size display
+    updateSizeDisplay(4);
 });
 
 // Handle keyboard input
@@ -254,15 +272,6 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
-// Handle grid size change
-function changeGridSize(size) {
-    size = parseInt(size);
-    // Update best score display for new grid size
-    document.getElementById('best-score').textContent = 
-        localStorage.getItem(`bestScore${size}`) || '0';
-    game = new Game2048(size);
-}
 
 // Reset game
 function resetGame() {

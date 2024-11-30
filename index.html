@@ -22,11 +22,11 @@
             </div>
         </div>
         <div class="controls">
-            <select id="grid-size" onchange="changeGridSize(this.value)">
-                <option value="4">4x4</option>
-                <option value="8">8x8</option>
-                <option value="16">16x16</option>
-            </select>
+            <div class="slider-container">
+                <label for="grid-size">Grid Size: <span id="size-display">4x4</span></label>
+                <input type="range" id="grid-size" min="2" max="56" value="4" step="1" 
+                       oninput="updateSizeDisplay(this.value)" onchange="changeGridSize(this.value)">
+            </div>
             <button onclick="resetGame()">New Game</button>
         </div>
         <div class="game-container">
