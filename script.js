@@ -3,19 +3,10 @@ class Game2048 {
         this.gridSize = gridSize;
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(0));
         this.score = 0;
-        this.bestScore = this.loadBestScore();
+        this.bestScore = parseInt(localStorage.getItem(`bestScore${gridSize}`)) || 0;
         this.gameContainer = document.getElementById('grid-container');
         this.setupGrid();
         this.initializeGame();
-    }
-
-    loadBestScore() {
-        const storedScore = localStorage.getItem(`bestScore${this.gridSize}`);
-        return storedScore ? parseInt(storedScore) : 0;
-    }
-
-    saveBestScore() {
-        localStorage.setItem(`bestScore${this.gridSize}`, this.bestScore.toString());
     }
 
     setupGrid() {
@@ -68,8 +59,7 @@ class Game2048 {
     initializeGame() {
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(0));
         this.score = 0;
-        document.getElementById('score').textContent = '0';
-        document.getElementById('best-score').textContent = this.bestScore;
+        this.updateScore();
         this.addNewTile();
         this.addNewTile();
         this.renderGrid();
@@ -161,27 +151,26 @@ class Game2048 {
         if (moved) {
             this.addNewTile();
             this.renderGrid();
+            this.updateScore();
+            
+            // Check for game over
+            if (this.isGameOver()) {
+                setTimeout(() => alert('Game Over!'), 300);
+            }
         }
     }
 
     moveRow(row) {
         // Filter non-zero elements
         let elements = row.filter(x => x !== 0);
-        let scoreGain = 0;
         
         // Merge adjacent equal elements
         for (let i = 0; i < elements.length - 1; i++) {
             if (elements[i] === elements[i + 1]) {
                 elements[i] *= 2;
-                scoreGain += elements[i];
+                this.score += elements[i];
                 elements.splice(i + 1, 1);
             }
-        }
-        
-        // Update score if any merges happened
-        if (scoreGain > 0) {
-            this.score += scoreGain;
-            this.updateScore();
         }
         
         // Pad with zeros
@@ -204,7 +193,7 @@ class Game2048 {
         document.getElementById('score').textContent = this.score;
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
-            this.saveBestScore();
+            localStorage.setItem(`bestScore${this.gridSize}`, this.bestScore);
             document.getElementById('best-score').textContent = this.bestScore;
         }
     }
@@ -240,14 +229,22 @@ function updateSizeDisplay(size) {
 // Handle grid size change
 function changeGridSize(size) {
     size = parseInt(size);
+    // Update best score display for new grid size
+    document.getElementById('best-score').textContent = 
+        localStorage.getItem(`bestScore${size}`) || '0';
     game = new Game2048(size);
-    // Best score is now loaded in the constructor
 }
 
 // Initialize game
 let game;
 document.addEventListener('DOMContentLoaded', () => {
     game = new Game2048(4); // Default to 4x4 grid
+    
+    // Update best score display for initial grid size
+    document.getElementById('best-score').textContent = 
+        localStorage.getItem('bestScore4') || '0';
+    
+    // Set initial size display
     updateSizeDisplay(4);
 });
 
@@ -274,6 +271,40 @@ document.addEventListener('keydown', (event) => {
                 break;
         }
     }
+});
+
+// Implement touch controls for mobile devices
+function handleTouchStart(event) {
+    const touchStartX = event.touches[0].clientX;
+    const touchStartY = event.touches[0].clientY;
+    return { touchStartX, touchStartY };
+}
+
+function handleTouchEnd(event, touchStart) {
+    const touchEndX = event.changedTouches[0].clientX;
+    const touchEndY = event.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStart.touchStartX;
+    const deltaY = touchEndY - touchStart.touchStartY;
+    const threshold = 30; // Minimum distance to trigger a swipe
+
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+        if (deltaX > 0) {
+            game.move('right');
+        } else {
+            game.move('left');
+        }
+    } else if (Math.abs(deltaY) > threshold) {
+        if (deltaY > 0) {
+            game.move('down');
+        } else {
+            game.move('up');
+        }
+    }
+}
+
+document.addEventListener('touchstart', (event) => {
+    const touchStart = handleTouchStart(event);
+    document.addEventListener('touchend', (event) => handleTouchEnd(event, touchStart));
 });
 
 // Reset game
