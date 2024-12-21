@@ -9,6 +9,28 @@ class Game2048 {
         this.initializeGame();
     }
 
+    saveGame(slot) {
+        const gameState = {
+            grid: this.grid,
+            score: this.score,
+        };
+        localStorage.setItem(`2048_game_slot_${slot}`, JSON.stringify(gameState));
+        alert(`Game saved in slot ${slot}`);
+    }
+
+    loadGame(slot) {
+        const savedGame = localStorage.getItem(`2048_game_slot_${slot}`);
+        if (savedGame) {
+            const gameState = JSON.parse(savedGame);
+            this.grid = gameState.grid;
+            this.score = gameState.score;
+            this.renderGrid();
+            alert(`Game loaded from slot ${slot}`);
+        } else {
+            alert(`No saved game in slot ${slot}`);
+        }
+    }
+
     setupGrid() {
         // Clear existing grid
         this.gameContainer.innerHTML = '';
@@ -221,6 +243,27 @@ class Game2048 {
     }
 }
 
+function setupSaveLoadUI() {
+    const saveButtonsContainer = document.getElementById('save-buttons');
+    const loadButtonsContainer = document.getElementById('load-buttons');
+
+    for (let i = 1; i <= 5; i++) {
+        const savedGame = JSON.parse(localStorage.getItem(`2048_game_slot_${i}`));
+        const saveButton = document.createElement('button');
+        saveButton.textContent = `Save Slot ${i}`;
+        saveButton.onclick = () => game.saveGame(i);
+        saveButtonsContainer.appendChild(saveButton);
+
+        if(savedGame){
+            const loadButton = document.createElement('button');
+            loadButton.textContent = `Slot ${i} Score:${game.score} Grid:${game.grid.length}x${game.grid[0].length}`;
+            loadButton.onclick = () => game.loadGame(i);
+            loadButtonsContainer.appendChild(loadButton);
+        }
+        
+    }
+}
+
 // Update size display while sliding
 function updateSizeDisplay(size) {
     document.getElementById('size-display').textContent = `${size}x${size}`;
@@ -239,7 +282,7 @@ function changeGridSize(size) {
 let game;
 document.addEventListener('DOMContentLoaded', () => {
     game = new Game2048(4); // Default to 4x4 grid
-    
+    setupSaveLoadUI();
     // Update best score display for initial grid size
     document.getElementById('best-score').textContent = 
         localStorage.getItem('bestScore4') || '0';
