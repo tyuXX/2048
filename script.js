@@ -122,17 +122,22 @@ class Game2048 {
         const tile = document.createElement('div');
         tile.className = `tile tile-${value}${isNew ? ' tile-new' : ''}`;
         tile.textContent = value;
-        
+    
+        // Calculate font size based on grid size
+        const baseFontSize = 100; // Maximum font size for the smallest grid
+        const fontSize = Math.max(baseFontSize / Math.sqrt(this.gridSize),7); // Scale down font size with larger grid sizes
+        tile.style.fontSize = `${fontSize}px`; // Set the calculated font size
+    
         const gapSize = Math.min(15, Math.max(2, Math.floor(this.containerSize / this.gridSize / 4))); // Adaptive gap size
         const position = {
             left: col * (this.cellSize + gapSize),
             top: row * (this.cellSize + gapSize)
         };
-        
+    
         tile.style.width = `${this.cellSize}px`;
         tile.style.height = `${this.cellSize}px`;
         tile.style.transform = `translate(${position.left}px, ${position.top}px)`;
-        
+    
         this.gameContainer.appendChild(tile);
     }
 
@@ -345,10 +350,13 @@ function handleTouchEnd(event, touchStart) {
     }
 }
 
-document.addEventListener('touchstart', (event) => {
-    const touchStart = handleTouchStart(event);
-    document.addEventListener('touchend', (event) => handleTouchEnd(event, touchStart));
+let touchStart;
+
+document.getElementById("gameContainer").addEventListener('touchstart', (event) => {
+    touchStart = handleTouchStart(event);
 });
+
+document.getElementById("gameContainer").addEventListener('touchend', (event) => handleTouchEnd(event, touchStart));
 
 // Reset game
 function resetGame() {
